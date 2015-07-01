@@ -194,7 +194,7 @@ void QRFactorization::insertColumn(int k, EigenVector& v)
   assertion1(k >= 0, k);
   assertion1(k <= _cols, k);
   assertion2(v.size() == _rows, v.size(), _rows);
-  
+
   // resize R(1:m, 1:m) -> R(1:m+1, 1:m+1)
   _R.conservativeResize(_cols+1,_cols+1);
   _R.col(_cols) = EigenVector::Zero(_cols+1);
@@ -214,18 +214,32 @@ void QRFactorization::insertColumn(int k, EigenVector& v)
     _R(j,j) = 0.;
   }
   
+  // orthogonalize v to columns of Q
+  EigenVector u(_cols);
+  //double rho0 = v.norm();
+  double rho1 = 0.;
+  int err = orthogonalize(v, u, rho1, _cols-1);
+  assertion1(err >= 0, err);
+
+   /*    - QR-filtering -
+	*  if rho1 = |v_ortho| is small, there is little new information
+	*  incorporated in v. The component of v that is orthogonal to Q
+	*  is vanishingly small. this is to be tested here.
+	*  If true, the column should be discarded.
+	*/
+	//if(rho1 < eps * rho0)
+	//{
+	//	return;
+	//}
+
   assertion2(_R.cols() == _cols, _R.cols(), _cols);
   assertion2(_R.rows() == _cols, _Q.rows(), _cols);
   
-  // orthogonalize v to columns of Q
-  EigenVector u(_cols);
-  double rho = 0;
-  int err = orthogonalize(v, u, rho, _cols-1);
   //_Q.conservativeResize(Eigen::NoChange_t, _cols);
   _Q.conservativeResize(_rows, _cols);
   _Q.col(_cols-1) = v;
   
-  assertion2(u(_cols-1) == rho, u.tail(1), rho);
+  assertion2(u(_cols-1) == rho1, u.tail(1), rho1);
   assertion2(_Q.cols() == _cols, _Q.cols(), _cols);
   assertion2(_Q.rows() == _rows, _Q.rows(), _rows);
   
@@ -311,7 +325,7 @@ int QRFactorization::orthogonalize(EigenVector& v, EigenVector& r, double& rho,
 		if (_rows == colNum) {
 			v = EigenVector::Zero(_rows);
 			rho = 0.;
-			return 0;
+			return k;
 		}
 
 		/**   - test for nontermination -
@@ -375,7 +389,7 @@ int QRFactorization::orthogonalize(EigenVector& v, EigenVector& r, double& rho,
 	v /= rho1;
 	rho = null ? 0 : rho1;
 	r(colNum) = rho;
-	return 0;
+	return k;
 }      
 
    

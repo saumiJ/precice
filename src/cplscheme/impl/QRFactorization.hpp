@@ -179,8 +179,8 @@ public:
    EigenMatrix& matrixQ();
    EigenMatrix& matrixR();
    
-   int cols();
    int rows();
+   int cols();
 
 private:
   
@@ -216,8 +216,9 @@ private:
   EigenMatrix _Q;
   EigenMatrix _R;
   
-  int _cols;
   int _rows;
+  int _cols;
+
   double _omega;
   double _theta;
   double _sigma;
