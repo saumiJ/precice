@@ -41,6 +41,7 @@ PostProcessingConfiguration:: PostProcessingConfiguration
   TAG_TIMESTEPS_REUSED("timesteps-reused"),
   TAG_SINGULARITY_LIMIT("singularity-limit"),
   TAG_DATA("data"),
+  TAG_FILTER("filter"),
   ATTR_NAME("name"),
   ATTR_MESH("mesh"),
   ATTR_SCALING("scaling"),
@@ -201,6 +202,9 @@ void PostProcessingConfiguration:: xmlTagCallback
   else if (callingTag.getName() == TAG_SINGULARITY_LIMIT){
     _config.singularityLimit = callingTag.getDoubleAttributeValue(ATTR_VALUE);
   }
+  else if (callingTag.getName() == TAG_FILTER){
+      _config.filter = callingTag.getStringAttributeValue(ATTR_NAME);
+  }
 }
 
 void PostProcessingConfiguration:: xmlEndTagCallback
@@ -228,21 +232,24 @@ void PostProcessingConfiguration:: xmlEndTagCallback
       _postProcessing = impl::PtrPostProcessing (
           new impl::IQNILSPostProcessing(
           _config.relaxationFactor, _config.maxIterationsUsed,
-          _config.timestepsReused, _config.singularityLimit,
+          _config.timestepsReused, _config.filter,
+          _config.singularityLimit,
           _config.dataIDs, _config.scalings) );
     }
     else if (callingTag.getName() == VALUE_MVQN){
       _postProcessing = impl::PtrPostProcessing (
           new impl::MVQNPostProcessing(
           _config.relaxationFactor, _config.maxIterationsUsed,
-          _config.timestepsReused, _config.singularityLimit,
+          _config.timestepsReused, _config.filter,
+          _config.singularityLimit,
           _config.dataIDs, _config.scalings) );
     }
     else if (callingTag.getName() == VALUE_BROYDEN){
       _postProcessing = impl::PtrPostProcessing (
           new impl::BroydenPostProcessing(
           _config.relaxationFactor, _config.maxIterationsUsed,
-          _config.timestepsReused, _config.singularityLimit,
+          _config.timestepsReused,_config.filter,
+          _config.singularityLimit,
           _config.dataIDs, _config.scalings) );
     }
     else {
@@ -321,6 +328,7 @@ void PostProcessingConfiguration:: addTypeSpecificSubtags
     tagSingularityLimit.addAttribute(attrDoubleValue );
     tag.addSubtag(tagSingularityLimit );
 
+
     XMLTag tagData(*this, TAG_DATA, XMLTag::OCCUR_ONCE_OR_MORE );
     XMLAttribute<std::string> attrName(ATTR_NAME);
     XMLAttribute<std::string> attrMesh(ATTR_MESH);
@@ -332,6 +340,12 @@ void PostProcessingConfiguration:: addTypeSpecificSubtags
     tagData.addAttribute(attrName);
     tagData.addAttribute(attrMesh);
     tag.addSubtag(tagData);
+
+    XMLTag tagFilter(*this, TAG_FILTER, XMLTag::OCCUR_ONCE );
+	tagFilter.addAttribute(attrName);
+	tagFilter.setDocumentation("Type of filtering technique that is used to "
+			"maintain good conditioning in the least-squares system.");
+	tag.addSubtag(tagFilter);
   }
   else if (tag.getName() == VALUE_MVQN){
     XMLTag tagInitRelax(*this, TAG_INIT_RELAX, XMLTag::OCCUR_ONCE );
@@ -363,6 +377,16 @@ void PostProcessingConfiguration:: addTypeSpecificSubtags
     tagData.addAttribute(attrName);
     tagData.addAttribute(attrMesh);
     tag.addSubtag(tagData);
+
+
+    XMLTag tagFilter(*this, TAG_FILTER, XMLTag::OCCUR_ONCE );
+	tagFilter.addAttribute(attrName);
+	tagFilter.setDocumentation("Type of filtering technique that is used to "
+			"maintain good conditioning in the least-squares system. Possible filters:\n"
+			"  QR1-filter: updateQR-dec with test R(i,i) < eps\n"
+			"  QR2-filter: en-block Gram-Schmidt with test |v_orth| < eps * |v|\n"
+			"  POD-filter: svd of V=USX^T, truncation, en-block Gram-Schmidt of VX");
+	tag.addSubtag(tagFilter);
   }
   else if (tag.getName() == VALUE_BROYDEN){
     XMLTag tagInitRelax(*this, TAG_INIT_RELAX, XMLTag::OCCUR_ONCE );

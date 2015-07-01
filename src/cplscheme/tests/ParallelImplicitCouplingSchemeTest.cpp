@@ -245,6 +245,7 @@ void ParallelImplicitCouplingSchemeTest:: testVIQNPP()
   int    maxIterationsUsed = 50;
   int    timestepsReused = 6;
   double singularityLimit = 1e-10;
+  std::string filter("QR1-filter");
   std::vector<int> dataIDs;
   dataIDs.push_back(0);
   dataIDs.push_back(1);
@@ -254,7 +255,7 @@ void ParallelImplicitCouplingSchemeTest:: testVIQNPP()
   mesh::PtrMesh dummyMesh ( new mesh::Mesh("dummyMesh", 3, false) );
 
   cplscheme::impl::IQNILSPostProcessing pp(initialRelaxation,maxIterationsUsed,
-                                           timestepsReused, singularityLimit, dataIDs, scalings);
+                                           timestepsReused, filter, singularityLimit, dataIDs, scalings);
 
   //init displacements
   utils::DynVector dvalues;
@@ -336,6 +337,7 @@ void ParallelImplicitCouplingSchemeTest:: testMVQNPP()
   double initialRelaxation = 0.01;
   int    maxIterationsUsed = 50;
   int    timestepsReused = 6;
+  std::string filter("QR1-filter");
   double singularityLimit = 1e-10;
   std::vector<int> dataIDs;
   dataIDs.push_back(0);
@@ -347,7 +349,7 @@ void ParallelImplicitCouplingSchemeTest:: testMVQNPP()
 
   
   cplscheme::impl::MVQNPostProcessing pp(initialRelaxation,maxIterationsUsed,
-                                         timestepsReused, singularityLimit, dataIDs, scalings);
+                                         timestepsReused, filter, singularityLimit, dataIDs, scalings);
   
   //init displacements
   utils::DynVector dvalues;

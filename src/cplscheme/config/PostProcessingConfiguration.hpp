@@ -75,6 +75,7 @@ private:
    const std::string TAG_TIMESTEPS_REUSED;
    const std::string TAG_SINGULARITY_LIMIT;
    const std::string TAG_DATA;
+   const std::string TAG_FILTER;
 
    const std::string ATTR_NAME;
    const std::string ATTR_MESH;
@@ -103,6 +104,7 @@ private:
       std::vector<int> dataIDs;
       std::map<int,double> scalings;
       std::string type;
+      std::string filter;
       double relaxationFactor;
       int maxIterationsUsed;
       int timestepsReused;
@@ -113,6 +115,7 @@ private:
          dataIDs (),
          scalings(),
          type ( "" ),
+         filter( "QR1-filter" ),
          relaxationFactor ( 0.0 ),
          maxIterationsUsed ( 0 ),
          timestepsReused ( 0 ),

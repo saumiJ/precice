@@ -43,6 +43,7 @@ public:
       double initialRelaxation,
       int    maxIterationsUsed,
       int    timestepsReused,
+      std::string filter,
       double singularityLimit,
       std::vector<int>    dataIDs,
       std::map<int,double>    scalings);

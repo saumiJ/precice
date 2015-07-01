@@ -33,14 +33,19 @@ BaseQNPostProcessing:: BaseQNPostProcessing
   double initialRelaxation,
   int    maxIterationsUsed,
   int    timestepsReused,
+  std::string filter,
   double singularityLimit,
   std::vector<int> dataIDs,
   std::map<int,double> scalings)
 :
   PostProcessing(),
+  QR1_FILTER("QR1-filter"),
+  QR2_FILTER("QR2-filter"),
+  POD_FILTER("POD-filter"),
   _initialRelaxation(initialRelaxation),
   _maxIterationsUsed(maxIterationsUsed),
   _timestepsReused(timestepsReused),
+  _filter(filter),
   _singularityLimit(singularityLimit),
   _dataIDs(dataIDs),
   _secondaryDataIDs(),
@@ -61,8 +66,8 @@ BaseQNPostProcessing:: BaseQNPostProcessing
   _matrixWBackup(),
   _matrixColsBackup(),
   //_secondaryMatricesW(),
-  _infostream(),
-  _matrixCols()
+  _matrixCols(),
+  _infostream()
 {
    preciceCheck((_initialRelaxation > 0.0) && (_initialRelaxation <= 1.0),
                 "BaseQNPostProcessing()",
@@ -217,7 +222,6 @@ void BaseQNPostProcessing:: updateDifferenceMatrices
   preciceTrace("updateDiffernceMatrices()");
   using namespace tarch::la;
 
-  
   // Compute current residual: vertex-data - oldData
   //DataValues residuals(scaledValues);
   _residuals = _scaledValues;
@@ -262,10 +266,11 @@ void BaseQNPostProcessing:: updateDifferenceMatrices
       if (not columnLimitReached && overdetermined){
         _matrixV.appendFront(deltaR); 
         _matrixW.appendFront(deltaXTilde); 
-	
-	// insert column deltaR = _residuals - _oldResiduals at pos. 0 (front) into the 
-	// QR decomposition and updae decomposition
-	_qrV.pushFront(deltaR);
+
+		// insert column deltaR = _residuals - _oldResiduals at pos. 0 (front) into the
+		// QR decomposition and update decomposition
+        if(_filter == QR1_FILTER)
+        	_qrV.pushFront(deltaR);
         
         _matrixCols.front()++;
       }
@@ -273,12 +278,14 @@ void BaseQNPostProcessing:: updateDifferenceMatrices
         _matrixV.shiftSetFirst(deltaR); 
         _matrixW.shiftSetFirst(deltaXTilde);
 	
-	// inserts column deltaR at pos. 0 to the QR decomposition and deletes the last column
-	// the QR decomposition of V is updated
-	_qrV.pushFront(deltaR);
-	_qrV.popBack();
-	
-	_matrixCols.front()++;
+		// inserts column deltaR at pos. 0 to the QR decomposition and deletes the last column
+		// the QR decomposition of V is updated
+		if (_filter == QR1_FILTER) {
+			_qrV.pushFront(deltaR);
+			_qrV.popBack();
+		}
+
+		_matrixCols.front()++;
         _matrixCols.back()--;
         if (_matrixCols.back() == 0){
           _matrixCols.pop_back();
@@ -370,7 +377,8 @@ void BaseQNPostProcessing:: performPostProcessing
      // recomputation of QR decomposition from _matrixV = _matrixVBackup
      // this occurs very rarely, to be precice, it occurs only if the coupling terminates 
      // after the first iteration and the matrix data from time step t-2 has to be used
-     _qrV.reset(_matrixV);
+     if(_filter == QR1_FILTER)
+    	 _qrV.reset(_matrixV);
     }
 
     DataValues xUpdate(_residuals.size(), 0.0);
@@ -396,7 +404,7 @@ void BaseQNPostProcessing:: performPostProcessing
       // after the first iteration (no new data, i.e., V = W = 0)
       if(_matrixV.cols() > 0 && _matrixW.cols() > 0)
       {
-	_matrixColsBackup = _matrixCols;
+    	_matrixColsBackup = _matrixCols;
         _matrixVBackup = _matrixV;
         _matrixWBackup = _matrixW;
       }
@@ -408,7 +416,8 @@ void BaseQNPostProcessing:: performPostProcessing
         _matrixV.clear();
         _matrixW.clear();
         _matrixCols.clear();
-	_qrV.reset();
+        if(_filter == QR1_FILTER)
+        	_qrV.reset();
       }
       
           // TOD0: The following is still misssing for reusedTimeSTeps=0 
@@ -507,7 +516,8 @@ void BaseQNPostProcessing:: iterationsConverged
       _matrixW.remove(_matrixW.cols() - 1);
       
       // also remove the corresponding columns from the dynamic QR-descomposition of _matrixV
-      _qrV.popBack();
+      if(_filter == QR1_FILTER)
+    	  _qrV.popBack();
     }
     _matrixCols.pop_back();
   }
@@ -558,7 +568,8 @@ void BaseQNPostProcessing:: removeMatrixColumn
   _matrixW.remove(columnIndex);
   
   // remove corresponding column from dynamic QR-decomposition of _matrixV
-  _qrV.deleteColumn(columnIndex);
+  if(_filter == QR1_FILTER)
+	  _qrV.deleteColumn(columnIndex);
   
   // Reduce column count
   std::deque<int>::iterator iter = _matrixCols.begin();

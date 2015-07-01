@@ -73,6 +73,7 @@ public:
       double initialRelaxation,
       int    maxIterationsUsed,
       int    timestepsReused,
+      std::string filter,
       double singularityLimit,
       std::vector<int>    dataIDs,
       std::map<int,double>    scalings);
@@ -130,14 +131,16 @@ public:
    
 
 protected:
-  
-  std::fstream _infostream;
 
    typedef tarch::la::DynamicVector<double> DataValues;
 
    typedef tarch::la::DynamicColumnMatrix<double> DataMatrix;
 
    typedef tarch::la::DynamicMatrix<double> Matrix;
+
+   const std::string QR1_FILTER;
+   const std::string QR2_FILTER;
+   const std::string POD_FILTER;
 
    // @brief Logging device.
    static tarch::logging::Log _log;
@@ -150,6 +153,8 @@ protected:
 
    // @brief Maximum number of old timesteps (with data values) kept.
    int _timestepsReused;
+
+   std::string _filter;
 
    // @brief Determines sensitivity when two matrix columns are considered equal.
    //
@@ -218,6 +223,8 @@ protected:
    // a singular matrix in the QR decomposition can be removed and tracked.
    std::deque<int> _matrixCols;
    
+   std::fstream _infostream;
+
    // @brief updates the V, W matrices (as well as the matrices for the secondary data)
    virtual void updateDifferenceMatrices(DataMap & cplData);
    
