@@ -41,6 +41,7 @@ public:
       double initialRelaxation,
       int    maxIterationsUsed,
       int    timestepsReused,
+      std::string filter,
       double singularityLimit,
       std::vector<int>    dataIDs,
       std::map<int,double>    scalings);
@@ -95,6 +96,10 @@ private:
    // @brief computes the IQN-ILS update using QR decomposition
    virtual void computeQNUpdate(DataMap& cplData, DataValues& xUpdate);
    
+   void computeQNUpdate_QRFilter1(PostProcessing::DataMap& cplData, DataValues& xUpdate);
+   void computeQNUpdate_QRFilter2(PostProcessing::DataMap& cplData, DataValues& xUpdate);
+   void computeQNUpdate_PODFilter(PostProcessing::DataMap& cplData, DataValues& xUpdate);
+
    // @brief computes underrelaxation for the secondary data
    virtual void computeUnderrelaxationSecondaryData(DataMap& cplData);
    
