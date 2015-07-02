@@ -228,6 +228,8 @@ void IQNILSPostProcessing::computeQNUpdate_PODFilter
 			_infostream << "   (POD-Filter) t="<<tSteps<<", k="<<its
 						<<" | truncating matrices VX, WX after the first " << k
 						<<"columns. Discarded columns: "<< _V.cols()-k<< std::flush<<std::endl;
+			// debugging information, can be removed
+			deletedColumns += _V.rows()-k;
 			break;
 		}
 	}
@@ -235,9 +237,6 @@ void IQNILSPostProcessing::computeQNUpdate_PODFilter
 	// compute V_til = V*phi and W_til = W*phi
     _V = _V*phi;
     _W = _W*phi;
-
-    // debugging information, can be removed
-    deletedColumns += _V.rows()-k;
 
     // truncate
     _V.conservativeResize(_V.rows(), k);
