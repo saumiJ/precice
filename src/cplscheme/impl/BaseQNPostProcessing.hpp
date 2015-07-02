@@ -225,6 +225,10 @@ protected:
    
    std::fstream _infostream;
 
+   // @ brief only debugging info, remove this:
+   int its,tSteps;
+   int deletedColumns;
+
    // @brief updates the V, W matrices (as well as the matrices for the secondary data)
    virtual void updateDifferenceMatrices(DataMap & cplData);
    

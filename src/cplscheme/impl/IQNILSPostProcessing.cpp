@@ -200,7 +200,19 @@ void IQNILSPostProcessing::computeQNUpdate_PODFilter
 	assertion2(phi.rows() == _V.cols(), phi.rows(), _V.cols());
 	assertion2(phi.rows() == _W.cols(), phi.rows(), _W.cols());
 
-	int k = 0;
+	/*
+	{
+	    int i = 0;
+	    char hostname[256];
+	    gethostname(hostname, sizeof(hostname));
+	    printf("PID %d on %s ready for attach\n", getpid(), hostname);
+	    fflush(stdout);
+	    while (0 == i)
+	        sleep(5);
+	}
+	*/
+
+	int k = _V.cols();
 	double lambda_1 = sigma(0)*sigma(0)/phi.rows();
 	for(int i = 1; i < sigma.size(); i++)
 	{
@@ -208,6 +220,14 @@ void IQNILSPostProcessing::computeQNUpdate_PODFilter
 		if(lambda_i/lambda_1 <= _singularityLimit)
 		{
 			k = i;
+
+			// print
+			preciceDebug("   (POD-Filter) t="<<tSteps<<", k="<<its
+					    <<" | truncating matrices VX, WX after the first " << k
+					    <<"columns. Discarded columns: "<< _V.cols()-k);
+			_infostream << "   (POD-Filter) t="<<tSteps<<", k="<<its
+						<<" | truncating matrices VX, WX after the first " << k
+						<<"columns. Discarded columns: "<< _V.cols()-k<< std::flush<<std::endl;
 			break;
 		}
 	}
@@ -216,9 +236,8 @@ void IQNILSPostProcessing::computeQNUpdate_PODFilter
     _V = _V*phi;
     _W = _W*phi;
 
-
-    preciceDebug("   (POD-Filter) truncating matrices VX, WX after the first " << k <<"columns. Discarded columns: "<< _V.rows()-k);
-    _infostream <<"   (POD-Filter) truncating matrices VX, WX after the first " << k <<"columns. Discarded columns: "<< _V.rows()-k<< "\n" << std::flush;
+    // debugging information, can be removed
+    deletedColumns += _V.rows()-k;
 
     // truncate
     _V.conservativeResize(_V.rows(), k);
@@ -231,10 +250,10 @@ void IQNILSPostProcessing::computeQNUpdate_PODFilter
     			Vcopy(i, j) = _V(i, j);
     		}
     DataMatrix Wcopy(_W.rows(), _W.cols(), 0.0);
-        for (int i = 0; i < _W.rows(); i++)
-        		for (int j = 0; j < _W.cols(); j++) {
-        			Wcopy(i, j) = _W(i, j);
-        		}
+	for (int i = 0; i < _W.rows(); i++)
+			for (int j = 0; j < _W.cols(); j++) {
+				Wcopy(i, j) = _W(i, j);
+			}
 	DataMatrix Q(Vcopy.rows(), Vcopy.cols(), 0.0);
 	DataMatrix R(Vcopy.cols(), Vcopy.cols(), 0.0);
 	tarch::la::modifiedGramSchmidt(Vcopy, Q, R);
@@ -301,9 +320,12 @@ void IQNILSPostProcessing::computeQNUpdate_QRFilter1
 		if (_matrixV.cols() > 1) {
 			for (int i = 0; i < _matrixV.cols(); i++) {
 				if (std::fabs(__R(i, i)) < _singularityLimit) {
-					preciceDebug("   Removing linear dependent column " << i);
-					_infostream << "removing linear dependent column " << i
-							<< "\n" << std::flush;
+
+					preciceDebug("   (QR1-Filter) t="<<tSteps<<", k="<<its
+							    <<" | deleting column " << i );
+					_infostream <<"   (QR1-Filter) t="<<tSteps<<", k="<<its
+						    	<<" | deleting column " << i << std::flush<<std::endl;
+
 					linearDependence = true;
 					removeMatrixColumn(i);
 				}
@@ -419,12 +441,17 @@ void IQNILSPostProcessing::computeQNUpdate_QRFilter2
 			// QR-filter test (if information that comes with vector v
 			// is little, i.e., |v_orth| small, discard vector v.)
 			double rho1 = v.norm();
+			//_infostream <<"  rho1:"<<rho1<<", eps*rho0:"<<rho0*_singularityLimit<<std::endl;
 			if(rho1 < _singularityLimit * rho0)
 			{
 				termination = false;
 				removeMatrixColumn(j);
-				preciceDebug("   (QR-2 Filter) Removing linear dependent column " << j);
-									_infostream << "  (QR-2 Filter) removing linear dependent column" << j<< "\n" << std::flush;
+
+				preciceDebug("   (QR2-Filter) t="<<tSteps<<", k="<<its<<" | deleting column " << j );
+				_infostream <<"   (QR2-Filter) t="<<tSteps<<", k="<<its
+							<<" | deleting column " << j << std::flush<<std::endl;
+
+
 				break;
 			}
 

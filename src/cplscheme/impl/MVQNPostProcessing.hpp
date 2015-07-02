@@ -72,7 +72,6 @@ private:
 
    // remove this ofter debugging, not useful
    // ---------------------------------------
-   int k,t;
    std::fstream f;
 //   io::TXTWriter _matrixWriter;
    //----------------------------------------

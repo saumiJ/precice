@@ -67,7 +67,10 @@ BaseQNPostProcessing:: BaseQNPostProcessing
   _matrixColsBackup(),
   //_secondaryMatricesW(),
   _matrixCols(),
-  _infostream()
+  _infostream(),
+  its(0),
+  tSteps(0),
+  deletedColumns(0)
 {
    preciceCheck((_initialRelaxation > 0.0) && (_initialRelaxation <= 1.0),
                 "BaseQNPostProcessing()",
@@ -79,11 +82,14 @@ BaseQNPostProcessing:: BaseQNPostProcessing
    preciceCheck(_timestepsReused >= 0, "BaseQNPostProcessing()",
                 "Number of old timesteps to be reused for QN "
                  << "post-processing has to be >= 0!");
+
+   // the following is uncommented, because we need to test smaller singularityLimits for the POD-Filter
+ /*
    preciceCheck(tarch::la::greater(_singularityLimit, 0.0),
                 "BaseQNPostProcessing()", "Singularity limit for QN "
                 << "post-processing has to be larger than numerical zero ("
                 << tarch::la::NUMERICAL_ZERO_DIFFERENCE << ")!");
-   
+   */
    
   _infostream.open ("postProcessingInfo.txt", std::ios_base::out);
   _infostream << std::setprecision(16);
@@ -156,10 +162,7 @@ void BaseQNPostProcessing:: scaling
   preciceTrace("scaling()");
   
   int offset = 0;
-//  double l2norm = 0.;
-//  double oldl2norm = 0.;
   foreach (int id, _dataIDs){
-//    l2norm = 0.; // debug
     double factor = _scalings[id];
     preciceDebug("Scaling Factor " << factor << " for id: " << id);
     int size = cplData[id]->values->size();
@@ -168,21 +171,9 @@ void BaseQNPostProcessing:: scaling
     for (int i=0; i < size; i++){
       _scaledValues[i+offset] = values[i]/factor;
       _scaledOldValues[i+offset] = oldValues[i]/factor;
-      
-      // debug:
-//      l2norm += _scaledValues[i+offset]*_scaledValues[i+offset];
     }
     offset += size;
-    
-    // debug:
-//    if (id == _dataIDs[0]) oldl2norm = sqrt(l2norm);
-//    preciceDebug(" + l2-Norm = " << sqrt(l2norm) << " of id: " << id);
-//    _scalingStream<<"\n"<<factor<<"	l2Norm: "<<sqrt(l2norm)<<"    of id: "<<id<<std::flush;
   } 
-  // debug:
-//  _scalingStream<<"\n  ratio: "<<(double)oldl2norm/sqrt(l2norm)<<"\n"<<std::flush;
-//  _scalingStream<<"-------------------\n"<<std::flush;
-//  preciceDebug(" + l2-Norm ratio = "<< oldl2norm/sqrt(l2norm));
 }
 
 /* ----------------------------------------------------------------------------
@@ -362,6 +353,9 @@ void BaseQNPostProcessing:: performPostProcessing
      
      // compute underrelaxation for the secondary data
      computeUnderrelaxationSecondaryData(cplData);
+
+     // debugging info
+     its++;
  
    }
    else {
@@ -395,6 +389,8 @@ void BaseQNPostProcessing:: performPostProcessing
     _scaledValues += xUpdate;        // = x^k + delta_x
     _scaledValues += _residuals; // = x^k + delta_x + r^k
     
+    // debugging info
+    its++;
     
     // pending deletion: delete old V, W matrices if timestepsReused = 0
     // those were only needed for the first iteration (instead of underrelax.)
@@ -440,6 +436,16 @@ void BaseQNPostProcessing:: iterationsConverged
 {
   preciceTrace("iterationsConverged()");
   
+  // debugging info, remove if not needed anymore:
+  // -----------------------
+  _infostream<<"\n ---------------- deletedColumns:"<<deletedColumns
+		     <<"\n\n ### time step:"<<tSteps+1<<" ###"<<std::endl;
+  its = 0;
+  tSteps++;
+  deletedColumns = 0;
+  // -----------------------
+
+
   // writig l2 norm of converged configuration to info stream
   // -----------
   if(_firstTimeStep)
@@ -561,6 +567,9 @@ void BaseQNPostProcessing:: removeMatrixColumn
   int columnIndex)
 {
   preciceTrace2("removeMatrixColumn()", columnIndex, _matrixV.cols());
+
+  // debugging information, can be removed
+  deletedColumns++;
 
   // Remove matrix columns
   assertion(_matrixV.cols() > 1);
