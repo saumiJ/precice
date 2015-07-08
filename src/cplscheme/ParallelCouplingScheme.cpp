@@ -252,6 +252,7 @@ void ParallelCouplingScheme::implicitAdvance()
       }
       if (convergence) {
         if (getPostProcessing().get() != NULL) {
+        	_deletedColumnsPPFiltering = getPostProcessing()->getDeletedColumns();
           getPostProcessing()->iterationsConverged(getAllData());
         }
         newConvergenceMeasurements();

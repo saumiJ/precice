@@ -228,6 +228,7 @@ void SerialCouplingScheme:: advance()
           timestepCompleted();
         }
         else if (getPostProcessing().get() != NULL) {
+          _deletedColumnsPPFiltering = getPostProcessing()->getDeletedColumns();
           getPostProcessing()->performPostProcessing(getSendData());
         }
         getM2N()->startSendPackage(0);

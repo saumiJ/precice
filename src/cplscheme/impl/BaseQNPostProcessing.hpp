@@ -129,6 +129,8 @@ public:
     */
    virtual void importState(io::TXTReader& reader);
    
+   // delete this:
+   virtual int getDeletedColumns();
 
 protected:
 

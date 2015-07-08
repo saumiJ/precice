@@ -562,6 +562,11 @@ void BaseQNPostProcessing:: importState(io::TXTReader& reader)
 //  }
 }
 
+int BaseQNPostProcessing::getDeletedColumns()
+{
+	return deletedColumns;
+}
+
 void BaseQNPostProcessing:: removeMatrixColumn
 (
   int columnIndex)
