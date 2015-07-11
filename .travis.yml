@@ -15,6 +15,7 @@ addons:
       - libopenmpi-dev
       - libboost-system1.55-dev
       - libboost-filesystem1.55-dev
+      - libboost-test1.55-dev
 
 env:
   global:
