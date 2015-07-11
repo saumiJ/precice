@@ -228,6 +228,7 @@ else:
 if not conf.CheckCXXHeader('boost/array.hpp'):
     errorMissingHeader('boost/array.hpp', 'Boost')
 
+uniqueCheckLib(conf, "boost_unit_test_framework")
 
 if not env["spirit2"]:
     env.Append(CPPDEFINES = ['PRECICE_NO_SPIRIT2'])
@@ -327,6 +328,19 @@ if not env["boost_inst"]:
     sourcesBoost = Glob(buildpath + '/boost/*.cpp')
     print "... done"
 
+def filter_recursive(l, p):
+    lst = []
+    for i in l:
+        if type(i) == list:
+            lst.append(filter_recursive(i, p))
+        else:
+            if p(i):
+                lst.append(i)
+    return lst
+
+sourcesPreCICETest = sourcesPreCICE
+sourcesPreCICE     = filter_recursive(sourcesPreCICE,     lambda x: not str(x).endswith("Boost.cpp"))
+sourcesPreCICEMain = filter_recursive(sourcesPreCICEMain, lambda x: not str(x).endswith("Boost.cpp"))
 
 lib = env.StaticLibrary (
     target = buildpath + '/libprecice',
@@ -340,6 +354,13 @@ bin = env.Program (
               sourcesBoost]
 )
 
+tests = env.Program (
+    target = buildpath + '/testprecice',
+    source = [sourcesPreCICETest,
+              sourcesBoost]
+)
+
+
 # Creates a symlink that always points to the latest build
 symlink = env.Command(
     target = "Symlink",
@@ -347,7 +368,7 @@ symlink = env.Command(
     action = "ln -fns {} {}".format(os.path.split(buildpath)[-1], os.path.join(os.path.split(buildpath)[0], "last"))
 )
 
-Default(lib, bin, symlink)
+Default(lib, bin, tests, symlink)
 AlwaysBuild(symlink)
 
 print "Targets:   " + ", ".join([str(i) for i in BUILD_TARGETS])
