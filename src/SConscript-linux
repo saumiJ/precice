@@ -89,7 +89,7 @@ sourcesPrecice = [
 ]
 
 sourcesDrivers = [
-    Glob('drivers/*.cpp')
+    File('drivers/main.cpp')
 ]
 
 sourcesTarchLA = [
@@ -122,7 +122,10 @@ sourcesTarch = [
    sourcesTarchTests,
 ]
 
-
+sourcesTests = [
+    Glob('*/boosttest/*.cpp'),
+    File('drivers/test_main.cpp')
+]
 
 sourcesAllNoMain = [
     sourcesTarch,
@@ -145,4 +148,4 @@ sourcesAll = [
     sourcesDrivers
 ]
 
-Return ('sourcesAllNoMain', 'sourcesAll')
+Return ('sourcesAllNoMain', 'sourcesAll', 'sourcesTests')
